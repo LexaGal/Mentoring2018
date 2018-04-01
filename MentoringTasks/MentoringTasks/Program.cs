@@ -12,16 +12,19 @@ namespace MentoringTasks
     {
         static string _exePath = @"C:\Program Files (x86)\Google\Chrome\Application\";
         static string _args = $"--enable-logging --headless --disable-gpu --print-to-pdf=\"{_exePath}temp.pdf\"";
-        static string _url = "https://developers.google.com/web/fundamentals/";
+        static string _url = "https://www.chromestatus.com/features#browsers.chrome.status%3A%22In%20development%22";
         static string _test = $@"{Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location)}\test.pdf";
         static List<string> _errors = new List<string>();
 
         static void Main()
         {
             Console.WriteLine("Printing...");
-            var task = RunProcessAsync($"{_exePath}chrome.exe", $"{_args} {_url}");
+            var task = RunSeleniumAsync();
+            //RunProcessAsync($"{_exePath}chrome.exe", $"{_args} {_url}");              
+
             var result = task.GetAwaiter().GetResult();
-            _errors.ToList().ForEach(Console.WriteLine);
+            //_errors.ToList().ForEach(Console.WriteLine);
+
             if (result == null)
             {
                 task.Exception?.InnerExceptions.SelectMany(e => e.Message).ToList().ForEach(Console.WriteLine);
@@ -56,7 +59,7 @@ namespace MentoringTasks
                 // ignore UI manifest errors here:
                 if (errArgs.Data != null && errArgs.Data.Contains("FILE_ERROR"))
                 {
-                    tcs.SetResult(null);                    
+                    tcs.SetResult(null);
                 }
             };
 
@@ -84,6 +87,15 @@ namespace MentoringTasks
 
             process.Start();
             process.BeginErrorReadLine();
+            return tcs.Task;
+        }
+
+        public static Task<MemoryStream> RunSeleniumAsync()
+        {
+            var tcs = new TaskCompletionSource<MemoryStream>();
+            var pageConverter = new PageConverter();
+            var stream = pageConverter.GetPdf(_url);
+            tcs.SetResult(stream);
             return tcs.Task;
         }
 
