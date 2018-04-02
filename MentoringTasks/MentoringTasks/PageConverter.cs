@@ -9,16 +9,16 @@ namespace MentoringTasks
 {
     public class PageConverter
     {
+        private IWebDriver _driver;
+
         public PageConverter()
         {
             var o = new ChromeOptions();
             o.AddArguments("disable-extensions");
-            o.AddArguments("--start-maximized");
+            o.AddArguments("--no-sandbox");
             _driver = new ChromeDriver(o);
         }
-
-        private IWebDriver _driver;
-
+        
         public MemoryStream GetPdf(string url)
         {
             return ConvertImageToPdf(GetEntireScreenshot(url));
