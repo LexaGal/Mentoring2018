@@ -26,7 +26,7 @@ namespace Sample03
 		public void WithoutProviderNonGeneric()
 		{
 			var client = new E3SQueryClient(ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["password"]);
-			var res = client.SearchFTS(typeof(EmployeeEntity), "workstation:(epbygrow0286)", 0, 10);
+			var res = client.SearchFTS(typeof(EmployeeEntity), "workstation:(*028*)&&city:(Minsk)", 0, 10);
 
 			foreach (var emp in res.OfType<EmployeeEntity>())
 			{
@@ -34,16 +34,59 @@ namespace Sample03
 			}
 		}
 
-
-		[TestMethod]
-		public void WithProvider()
+        [TestMethod]
+		public void RunConstantFirst()
 		{
 			var employees = new E3SEntitySet<EmployeeEntity>(ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["password"]);
 
-			foreach (var emp in employees.Where(e => "epbygrow0286" == e.workStation))
+			foreach (var emp in employees.Where(e => "Aliaksandr" == e.firstName))
 			{
-				Console.WriteLine("{0} {1}", emp.nativeName, emp.shortStartWorkDate);
+				Console.WriteLine($"{emp.displayName}, city: {emp.citySum}");
 			}
         }
-	}
+
+        [TestMethod]
+		public void RunStartsWith()
+		{
+			var employees = new E3SEntitySet<EmployeeEntity>(ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["password"]);
+
+			foreach (var emp in employees.Where(e => e.firstName.StartsWith("Ali")))
+			{
+				Console.WriteLine($"{emp.displayName.Replace("Ali", "ALI")}, city: {emp.citySum}");
+			}
+        }
+
+        [TestMethod]
+        public void RunEndsWith()
+        {
+            var employees = new E3SEntitySet<EmployeeEntity>(ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["password"]);
+
+            foreach (var emp in employees.Where(e => e.firstName.EndsWith("sandr")))
+            {
+                Console.WriteLine($"{emp.displayName.Replace("sandr", "SANDR")}, city: {emp.citySum}");
+            }
+        }
+
+        [TestMethod]
+        public void RunContains()
+        {
+            var employees = new E3SEntitySet<EmployeeEntity>(ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["password"]);
+
+            foreach (var emp in employees.Where(e => e.firstName.Contains("aksan")))
+            {
+                Console.WriteLine($"{emp.displayName.Replace("aksan", "AKSAN")}, city: {emp.citySum}");
+            }
+        }
+
+        [TestMethod]
+        public void RunStartsAndEnds()
+        {
+            var employees = new E3SEntitySet<EmployeeEntity>(ConfigurationManager.AppSettings["user"], ConfigurationManager.AppSettings["password"]);
+
+            foreach (var emp in employees.Where(e => e.firstName.StartsWith("Ali") && e.lastName.EndsWith("kin")))
+            {
+                Console.WriteLine($"{emp.displayName.Replace("Ali", "ALI").Replace("kin", "KIN")}, city: {emp.citySum}");
+            }
+        }
+    }
 }

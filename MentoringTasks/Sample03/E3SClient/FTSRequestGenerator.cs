@@ -29,15 +29,15 @@ namespace Sample03.E3SClient
 		public Uri GenerateRequestUrl(Type type, string query = "*", int start = 0, int limit = 10)
 		{
 			string metaTypeName = GetMetaTypeName(type);
-
+            var qrs = query.Split(new [] {"&&"}, StringSplitOptions.RemoveEmptyEntries).ToList();
+		    var sts = qrs.Select(qr => new Statement
+		    {
+		        Query = qr
+		    }).ToList();
+            
 			var ftsQueryRequest = new FTSQueryRequest
 			{
-				Statements = new List<Statement>
-				{
-					new Statement {
-						Query = query
-					}
-				},
+				Statements = sts, 
 				Start = start,
 				Limit = limit
 			};
