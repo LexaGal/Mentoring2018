@@ -1,4 +1,4 @@
-﻿namespace Interoparating
+﻿namespace Interoparating.PowerInfo
 {
     public enum PowerInformationLevel
     {

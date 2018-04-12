@@ -44,13 +44,16 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="PowerInformationLevel.cs" />
-    <Compile Include="PowerManagementUtil.cs" />
-    <Compile Include="PowerInfo.cs" />
+    <Compile Include="Managers\HibernateFileAction.cs" />
+    <Compile Include="Managers\HibernateFileManager.cs" />
+    <Compile Include="PowerInfo\PowerInformationLevel.cs" />
+    <Compile Include="UnmanagedUtil\PowerManagementUtil.cs" />
+    <Compile Include="PowerInfo\PowerInfo.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Structures\ProcessorPowerInformation.cs" />
     <Compile Include="Structures\SystemBatteryState.cs" />
+    <Compile Include="Managers\SuspendStateManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

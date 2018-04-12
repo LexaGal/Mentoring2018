@@ -5,8 +5,9 @@ using System.Linq;
 using System.Management;
 using System.Runtime.InteropServices;
 using Interoparating.Structures;
+using Interoparating.UnmanagedUtil;
 
-namespace Interoparating
+namespace Interoparating.PowerInfo
 {
     public class PowerInfo
     {
@@ -48,7 +49,7 @@ namespace Interoparating
                 return procPowerInfo;
             }
 
-            throw new Win32Exception();
+            throw new Win32Exception(Marshal.GetLastWin32Error());
         }
 
         private DateTime GetLastBootUpTime()
@@ -67,7 +68,7 @@ namespace Interoparating
 
         private T GetStructure<T>(PowerInformationLevel informationLevel)
         {
-            var outputPtr = Marshal.AllocCoTaskMem(Marshal.SizeOf<T>());
+            var outputPtr = Marshal.AllocHGlobal(Marshal.SizeOf<T>());
             var isSuccess = PowerManagementUtil.CallNtPowerInformation(
                 (int) informationLevel,
                 IntPtr.Zero,
@@ -75,13 +76,15 @@ namespace Interoparating
                 outputPtr,
                 Marshal.SizeOf<T>());
 
+            var obj = Marshal.PtrToStructure<T>(outputPtr);
+            Marshal.FreeHGlobal(outputPtr);
+
             if (isSuccess == PowerManagementUtil.STATUS_SUCCESS)
             {
-                var obj = Marshal.PtrToStructure<T>(outputPtr);
                 return obj;
             }
-            
-            throw new Win32Exception();
+
+            throw new Win32Exception(Marshal.GetLastWin32Error());
         }
     }
 }

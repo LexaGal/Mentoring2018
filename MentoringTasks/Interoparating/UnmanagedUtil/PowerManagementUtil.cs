@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using Interoparating.Structures;
 
-namespace Interoparating
+namespace Interoparating.UnmanagedUtil
 {
     public class PowerManagementUtil
     {

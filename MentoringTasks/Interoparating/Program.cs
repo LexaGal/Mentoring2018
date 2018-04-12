@@ -1,4 +1,5 @@
 ﻿using System;
+using Interoparating.Managers;
 
 namespace Interoparating
 {
@@ -6,8 +7,8 @@ namespace Interoparating
     {
         static void Main()
         {
-            var powerInfo = new PowerInfo();
-            
+            var powerInfo = new PowerInfo.PowerInfo();
+
             var lastSleepTime = powerInfo.GetLastSleepTime();
             Console.WriteLine($"last sleep time: {lastSleepTime}");
 
@@ -23,6 +24,16 @@ namespace Interoparating
             {
                 Console.WriteLine($"Curr. Mhz: {item.CurrentMhz}");
             }
+
+            var hibernateFileManager = new HibernateFileManager();
+            hibernateFileManager.ReserveFile();
+            hibernateFileManager.RemoveFile();
+
+            var suspendManager = new SuspendStateManager();
+            //to sleep
+            //suspendManager.SetSuspendState(false, true, true);
+            //to hibernate
+            //suspendManager.SetSuspendState(false, false, false);
 
             Console.ReadKey();           
         }
