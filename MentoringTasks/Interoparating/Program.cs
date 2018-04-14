@@ -29,7 +29,7 @@ namespace Interoparating
             hibernateFileManager.ReserveFile();
             hibernateFileManager.RemoveFile();
 
-            var suspendManager = new SuspendStateManager();
+            //var suspendManager = new SuspendStateManager();
             //to sleep
             //suspendManager.SetSuspendState(false, true, true);
             //to hibernate
