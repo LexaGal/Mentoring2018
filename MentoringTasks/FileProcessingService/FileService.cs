@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -20,22 +21,27 @@ namespace FileProcessingService
 
         string _inDir;
         string _outDir;
+        string _processedDir;
+        string _brokenDir;
 
         int _tryOpenFileAttempts = 3;
-        int _tryOpenFileDelay = 5000;
+        int _tryOpenFileDelay = 3000;
         string _pattern = "IMG_[0-9]+.(PNG|JPEG|BMP)";
 
         Document _document;
+        List<string> _files;
 
-        public FileService(string inDir, string outDir)
+        public FileService(string inDir, string outDir, string processedDir, string brokenDir)
         {
             _inDir = inDir;
             _outDir = outDir;
+            _processedDir = processedDir;
+            _brokenDir = brokenDir;
 
-            if (!Directory.Exists(inDir))
-                Directory.CreateDirectory(inDir);
-            if (!Directory.Exists(outDir))
-                Directory.CreateDirectory(outDir);
+            Directory.CreateDirectory(inDir);
+            Directory.CreateDirectory(outDir);
+            Directory.CreateDirectory(processedDir);
+            Directory.CreateDirectory(brokenDir);
 
             _watcher = new FileSystemWatcher(inDir);
             _watcher.Created += Watcher_Created;
@@ -43,6 +49,7 @@ namespace FileProcessingService
             _workThread = new Thread(ProcessFiles);
             _stopWorkEvent = new ManualResetEvent(false);
             _newFileEvent = new AutoResetEvent(false);
+            _files = new List<string>();
 
             _document = new Document();
             _document.AddSection();
@@ -52,31 +59,44 @@ namespace FileProcessingService
         {
             do
             {
-                foreach (var file in Directory.EnumerateFiles(_inDir))
+                var destDir = _processedDir;
+
+                foreach (var file in Directory.EnumerateFiles(_inDir).ToList())
                 {
-                    if (_stopWorkEvent.WaitOne(TimeSpan.Zero))
-                        return;
-
+                    if (_stopWorkEvent.WaitOne(TimeSpan.Zero)) return;
                     var fileName = Path.GetFileName(file);
-
                     if (fileName == null) continue;
                     if (!Regex.IsMatch(fileName.ToUpper(), _pattern)) continue;
 
                     if (TryOpenFile(file, _tryOpenFileAttempts))
                     {
-                        if (FileIsBarcode(file))
+                        try
                         {
-                            RenderPdfDocument();
+                            if (FileIsBarcode(file))
+                            {
+                                RenderPdfDocument();
+                                MoveFiles(_files, destDir);
+                                _files.Clear();
+                                destDir = _processedDir;
+                                if (TryOpenFile(file, _tryOpenFileAttempts)) File.Delete(file);
+                            }
+                            else
+                            {
+                                if(!_files.Contains(file))
+                                {
+                                    _files.Add(file);
+                                    AddFileToPdfDocument(file);
+                                }
+                            }
                         }
-                        else
+                        catch (OutOfMemoryException)
                         {
-                            AddFileToPdfDocument(file);
-                        }
-                        File.Delete(file);
+                            if (!_files.Contains(file)) _files.Add(file);
+                            destDir = _brokenDir;
+                        }                        
                     }
-                }
-
-            } while (WaitHandle.WaitAny(new WaitHandle[] {_stopWorkEvent, _newFileEvent}, 1000) != 0);
+                }                
+            } while (WaitHandle.WaitAny(new WaitHandle[] { _stopWorkEvent, _newFileEvent }, 3000) != 0);
         }
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
@@ -95,6 +115,19 @@ namespace FileProcessingService
             _watcher.EnableRaisingEvents = false;
             _stopWorkEvent.Set();
             _workThread.Join();
+        }
+
+        private void MoveFiles(IEnumerable<string> files, string destDir)
+        {
+            var fileTime = DateTime.Now.ToFileTime().ToString();
+            foreach (var file in files)
+            {
+                if (!TryOpenFile(file, _tryOpenFileAttempts)) continue;
+                var name = Path.GetFileName(file);
+                var dir = Path.Combine(destDir, fileTime);
+                Directory.CreateDirectory(dir);
+                File.Move(file, Path.Combine(dir, name));
+            }
         }
 
         private bool TryOpenFile(string fileName, int attempts)
@@ -118,24 +151,23 @@ namespace FileProcessingService
 
         private void AddFileToPdfDocument(string file)
         {
-            var img = ((Section)_document.Sections.First).AddImage(file);
-            img.Height = _document.DefaultPageSetup.PageHeight;
-            img.Width = _document.DefaultPageSetup.PageWidth;
+            ((Section)_document.Sections.First).AddPageBreak();
+            ((Section)_document.Sections.First).AddImage(file);
         }
 
         private void RenderPdfDocument()
         {
-            var render = new PdfDocumentRenderer {Document = _document};
+            var render = new PdfDocumentRenderer { Document = _document };
             render.RenderDocument();
-            render.Save($@"{_outDir}\file{DateTime.Now.ToFileTime()}.pdf");
+            render.Save($@"{_outDir}\{DateTime.Now.ToFileTime()}.pdf");
             _document = new Document();
             _document.AddSection();
         }
-        
+
         private bool FileIsBarcode(string file)
         {
-            var reader = new BarcodeReader { AutoRotate = true}; 
-            var bmp = (Bitmap)Image.FromFile(file);
+            var reader = new BarcodeReader {AutoRotate = true};
+            var bmp = (Bitmap) Image.FromFile(file);
             var result = reader.Decode(bmp);
             return result?.Text.ToUpper() == "SEPARATOR";
         }
