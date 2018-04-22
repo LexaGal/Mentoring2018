@@ -17,7 +17,11 @@ namespace FileProcessingService
                 return;
             }
 
-            var inDir = Path.Combine(currentDir, "in");
+            var inDirs = new[]
+            {
+                Path.Combine(currentDir, "in1"),
+                Path.Combine(currentDir, "in2")
+            };
             var outDir = Path.Combine(currentDir, "out");
             var processedDir = Path.Combine(currentDir, "processed");
             var brokenDir = Path.Combine(currentDir, "broken");
@@ -38,7 +42,7 @@ namespace FileProcessingService
                 hostConf => hostConf.Service<FileService>(
                     s =>
                     {
-                        s.ConstructUsing(() => new FileService(inDir, outDir, processedDir, brokenDir));
+                        s.ConstructUsing(() => new FileService(inDirs, outDir, processedDir, brokenDir));
                         s.WhenStarted(serv => serv.Start());
                         s.WhenStopped(serv => serv.Stop());
                     }
