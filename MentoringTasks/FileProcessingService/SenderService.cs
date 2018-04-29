@@ -4,12 +4,12 @@ using System.Threading;
 
 namespace FileProcessingService
 {
-    public class FileService
+    public class SenderService
     {
         ManualResetEvent _stopWorkEvent;
         List<DirFilesProcessor> _processors;
 
-        public FileService(string[] inDirs, string outDir, string processedDir, string brokenDir)
+        public SenderService(string[] inDirs)
         {
             _stopWorkEvent = new ManualResetEvent(false);
             _processors = new List<DirFilesProcessor>();
@@ -17,12 +17,8 @@ namespace FileProcessingService
             foreach (var inDir in inDirs)
             {
                 Directory.CreateDirectory(inDir);
-                _processors.Add(new DirFilesProcessor(inDir, outDir, processedDir, brokenDir, _stopWorkEvent));
+                _processors.Add(new DirFilesProcessor(inDir, _stopWorkEvent));
             }
-
-            Directory.CreateDirectory(outDir);
-            Directory.CreateDirectory(processedDir);
-            Directory.CreateDirectory(brokenDir);
         }
 
         public void Start()

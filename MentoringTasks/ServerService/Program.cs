@@ -1,11 +1,11 @@
-﻿using NLog;
+﻿using System.Diagnostics;
+using System.IO;
+using NLog;
 using NLog.Config;
 using NLog.Targets;
-using System.Diagnostics;
-using System.IO;
 using Topshelf;
 
-namespace FileProcessingService
+namespace ServerService
 {
     public class Program
     {
@@ -17,11 +17,8 @@ namespace FileProcessingService
                 return;
             }
 
-            var inDirs = new[]
-            {
-                Path.Combine(currentDir, "in1"),
-                Path.Combine(currentDir, "in2")
-            };
+            var outDir = Path.Combine(currentDir, "out");
+            var settingsDir = Path.Combine(currentDir, "../../");
             
             var conf = new LoggingConfiguration();
             var fileTarget = new FileTarget
@@ -36,10 +33,10 @@ namespace FileProcessingService
             var logFactory = new LogFactory(conf);
 
             HostFactory.Run(
-                hostConf => hostConf.Service<SenderService>(
+                hostConf => hostConf.Service<SaverService>(
                     s =>
                     {
-                        s.ConstructUsing(() => new SenderService(inDirs));
+                        s.ConstructUsing(() => new SaverService(outDir, settingsDir));
                         s.WhenStarted(serv => serv.Start());
                         s.WhenStopped(serv => serv.Stop());
                     }

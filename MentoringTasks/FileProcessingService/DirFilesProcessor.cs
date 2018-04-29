@@ -5,15 +5,19 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 using MigraDoc.DocumentObjectModel;
 using MigraDoc.Rendering;
+using PdfSharp.Pdf;
 using ZXing;
 
 namespace FileProcessingService
 {
     public class DirFilesProcessor
     {
-        public DirFilesProcessor(string inDir, string outDir, string processedDir, string brokenDir,
+        public DirFilesProcessor(string inDir, 
             ManualResetEvent stopWorkEvent)
         {
             _newFileEvent = new AutoResetEvent(false);
@@ -22,10 +26,6 @@ namespace FileProcessingService
             _document.AddSection();
 
             _inDir = inDir;
-            _outDir = outDir;
-            _processedDir = processedDir;
-            _brokenDir = brokenDir;
-
             _stopWorkEvent = stopWorkEvent;
 
             Watcher = new FileSystemWatcher(inDir);
@@ -34,10 +34,6 @@ namespace FileProcessingService
         }
 
         string _inDir;
-        string _outDir;
-        string _processedDir;
-        string _brokenDir;
-
         ManualResetEvent _stopWorkEvent;
         
         AutoResetEvent _newFileEvent;
@@ -55,8 +51,6 @@ namespace FileProcessingService
         {
             do
             {
-                var destDir = _processedDir;
-
                 foreach (var file in Directory.EnumerateFiles(_inDir).ToList())
                 {
                     if (_stopWorkEvent.WaitOne(TimeSpan.Zero)) return;
@@ -70,10 +64,8 @@ namespace FileProcessingService
                         {
                             if (FileIsBarcode(file))
                             {
-                                RenderPdfDocument();
-                                MoveFiles(_files, destDir);
+                                SendFiles(_files).GetAwaiter().GetResult();
                                 _files.Clear();
-                                destDir = _processedDir;
                                 if (TryOpenFile(file, _tryOpenFileAttempts)) File.Delete(file);
                             }
                             else
@@ -88,7 +80,6 @@ namespace FileProcessingService
                         catch (OutOfMemoryException)
                         {
                             if (!_files.Contains(file)) _files.Add(file);
-                            destDir = _brokenDir;
                         }
                     }
                 }
@@ -100,16 +91,47 @@ namespace FileProcessingService
             _newFileEvent.Set();
         }
 
-        private void MoveFiles(IEnumerable<string> _files, string destDir)
+        private async Task SendFiles(IEnumerable<string> files)
         {
-            var fileTime = DateTime.Now.ToFileTime().ToString();
-            foreach (var file in _files)
+            // Create the CloudBlobClient that rep = nullartblobs"CloudBlobClientCloudBlockBlob
+            CloudStorageAccount storageAccount;
+            CloudBlobContainer cloudBlobContainer = null;
+            
+            string storageConnectionString =
+                "DefaultEndpointsProtocol=https;AccountName=blobs2018;AccountKey=TP4jBXy9kr0Gek0GSdDVbyJlJlKEvstAcwZ+lxrvHr/vK2+oTXZKwuPaVXKzXc2pt8oSLr43nQ/NWJ1VsB5izg==;EndpointSuffix=core.windows.net";
+
+            if (CloudStorageAccount.TryParse(storageConnectionString, out storageAccount))
             {
-                if (!TryOpenFile(file, _tryOpenFileAttempts)) continue;
-                var name = Path.GetFileName(file);
-                var dir = Path.Combine(destDir, fileTime);
-                Directory.CreateDirectory(dir);
-                File.Move(file, Path.Combine(dir, name));
+                try
+                {
+                    var cloudBlobClient = storageAccount.CreateCloudBlobClient();
+                    cloudBlobContainer = cloudBlobClient.GetContainerReference("test");
+                    var cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference($"blob{Guid.NewGuid()}");
+                    var s = new MemoryStream();
+                    var pdf = RenderPdfDocument();
+                    pdf.Save(s, false);
+                    s.Position = 0;
+                    cloudBlockBlob.UploadFromStream(s);
+
+                    foreach (var file in files)
+                    {
+                        if (!TryOpenFile(file, _tryOpenFileAttempts)) continue;
+                        File.Delete(file);
+                    }
+                }
+                catch (StorageException ex)
+                {
+                    Console.WriteLine("Error returned from the service: {0}", ex.Message);
+                }
+                //finallyAsyncawait 
+                //{
+                //    if (cloudBlobContainer != null)
+                //    {
+                //        await cloudBlobContainer.DeleteIfEx
+                //    }
+
+                //    
+                //}
             }
         }
 
@@ -138,13 +160,13 @@ namespace FileProcessingService
             ((Section) _document.Sections.First).AddImage(file);
         }
 
-        private void RenderPdfDocument()
+        private PdfDocument RenderPdfDocument()
         {
             var render = new PdfDocumentRenderer {Document = _document};
             render.RenderDocument();
-            render.Save($@"{_outDir}\{DateTime.Now.ToFileTime()}.pdf");
             _document = new Document();
             _document.AddSection();
+            return render.PdfDocument;//r}\{DateTime.Now.ToFileTime()}.pdf");
         }
 
         private bool FileIsBarcode(string file)
