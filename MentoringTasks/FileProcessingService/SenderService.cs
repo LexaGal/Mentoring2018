@@ -26,6 +26,8 @@ namespace FileProcessingService
             foreach (var processor in _processors)
             {
                 processor.WorkThread.Start();
+                processor.SendInfoThread.Start();
+                processor.RecieveInfoThread.Start();
                 processor.Watcher.EnableRaisingEvents = true;
             }
         }
@@ -36,9 +38,16 @@ namespace FileProcessingService
             {
                 processor.Watcher.EnableRaisingEvents = false;
                 processor.WorkThread.Join();
+                processor.SendInfoThread.Join();
+                processor.RecieveInfoThread.Join();
             }
             _stopWorkEvent.Set();
         }
-
     }
+
+    public enum DirServiceState
+    {
+        Waiting,
+        Processing
+    } 
 }

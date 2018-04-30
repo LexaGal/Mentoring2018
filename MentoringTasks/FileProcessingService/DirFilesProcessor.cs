@@ -29,11 +29,13 @@ namespace FileProcessingService
 
             _inDir = inDir;
             _stopWorkEvent = stopWorkEvent;
-
+            
             Watcher = new FileSystemWatcher(inDir);
             Watcher.Created += Watcher_Created;
             WorkThread = new Thread(ProcessFiles);
-
+            SendInfoThread = new Thread(SendInfo);
+            RecieveInfoThread = new Thread(RecieveInfo);
+            
             CloudStorageAccount storageAccount;
             var storageConnectionString = ConfigurationManager.AppSettings["Storage"];
             if (!CloudStorageAccount.TryParse(storageConnectionString, out storageAccount)) return;
@@ -41,6 +43,8 @@ namespace FileProcessingService
             _cloudBlobContainer =
                 cloudBlobClient.GetContainerReference(ConfigurationManager.AppSettings["Container"]);
         }
+
+        Guid _id = Guid.NewGuid();
 
         string _inDir;
         ManualResetEvent _stopWorkEvent;
@@ -51,20 +55,28 @@ namespace FileProcessingService
 
         CloudBlobContainer _cloudBlobContainer;
 
+        DirServiceState _state;
+
         int _tryOpenFileAttempts = 3;
         int _tryOpenFileDelay = 3000;
+        int _waitDelay = 1000;
+
         string _pattern = "IMG_[0-9]+.(PNG|JPEG|BMP)";
         string _barcodeText = "SEPARATOR";
 
         public FileSystemWatcher Watcher { get; }
         public Thread WorkThread { get; }
-
+        public Thread SendInfoThread { get; }
+        public Thread RecieveInfoThread { get; }
+        
         private void ProcessFiles(object obj)
         {
             do
             {
                 foreach (var file in Directory.EnumerateFiles(_inDir).ToList())
                 {
+                    _state = DirServiceState.Processing;
+
                     if (_stopWorkEvent.WaitOne(TimeSpan.Zero)) return;
                     var fileName = Path.GetFileName(file);
                     if (fileName == null) continue;
@@ -95,7 +107,68 @@ namespace FileProcessingService
                         }
                     }
                 }
-            } while (WaitHandle.WaitAny(new WaitHandle[] {_stopWorkEvent, _newFileEvent}, 3000) != 0);
+                _state = DirServiceState.Waiting;
+            } while (WaitHandle.WaitAny(new WaitHandle[] {_stopWorkEvent, _newFileEvent}, _waitDelay) != 0);
+        }
+
+        private void SendInfo(object obj)
+        {
+            do
+            {
+                SendState().GetAwaiter().GetResult();
+                SendBarcode().GetAwaiter().GetResult();
+            } while (WaitHandle.WaitAny(new WaitHandle[] {_stopWorkEvent}, _waitDelay) != 0);
+        }
+
+        private void RecieveInfo(object obj)
+        {
+            do
+            {
+                RecieveState().GetAwaiter().GetResult();
+                RecieveBarcode().GetAwaiter().GetResult();
+            } while (WaitHandle.WaitAny(new WaitHandle[] {_stopWorkEvent}, _waitDelay) != 0);
+        }
+
+        private async Task SendState()
+        {
+            var queueClient = QueueClient.Create(ConfigurationManager.AppSettings["StatesQueue"]);
+            var state = $"{_id}: {_state}";
+            var message = new BrokeredMessage(state);
+            await queueClient.SendAsync(message);
+            await queueClient.CloseAsync();
+            Console.WriteLine($"Send {state}");
+        }
+
+        private async Task SendBarcode()
+        {
+            var queueClient = QueueClient.Create(ConfigurationManager.AppSettings["BarcodesQueue"]);
+            var message = new BrokeredMessage(_barcodeText);
+            await queueClient.SendAsync(message);
+            await queueClient.CloseAsync();
+            Console.WriteLine($"Send {_id}: {_barcodeText}");
+        }
+
+        private async Task RecieveState()
+        {
+            var queueClient =
+                QueueClient.Create(ConfigurationManager.AppSettings["SendStatesQueue"], ReceiveMode.ReceiveAndDelete);
+            var message = await queueClient.ReceiveAsync(new TimeSpan(1000));
+            if (message == null) return;
+            await SendState();
+            await queueClient.CloseAsync();
+            Console.WriteLine($"Recieve {_id}: {message.GetBody<string>()}");
+        }
+
+        private async Task RecieveBarcode()
+        {
+            var queueClient =
+                QueueClient.Create(ConfigurationManager.AppSettings["UpdateBarcodesQueue"], ReceiveMode.ReceiveAndDelete);
+            var message = await queueClient.ReceiveAsync(new TimeSpan(1000));
+            if (message == null) return;
+            var code = message.GetBody<string>();
+            _barcodeText = code;
+            await queueClient.CloseAsync();
+            Console.WriteLine($"Recieve {_id}: {code}");
         }
 
         private void Watcher_Created(object sender, FileSystemEventArgs e)
@@ -112,7 +185,7 @@ namespace FileProcessingService
             pdf.Save(ms, false);
             await cloudBlockBlob.UploadFromStreamAsync(ms);
 
-            var queueClient = QueueClient.Create(ConfigurationManager.AppSettings["Queue"]);
+            var queueClient = QueueClient.Create(ConfigurationManager.AppSettings["FilesQueue"]);
             var message = new BrokeredMessage(id);
             await queueClient.SendAsync(message);
             await queueClient.CloseAsync();
@@ -139,7 +212,6 @@ namespace FileProcessingService
                     Thread.Sleep(_tryOpenFileDelay);
                 }
             }
-
             return false;
         }
 
