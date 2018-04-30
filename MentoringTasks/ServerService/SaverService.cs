@@ -1,7 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
+using System.Configuration;
 using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.ServiceBus.Messaging;
+using Microsoft.WindowsAzure.Storage;
+using Microsoft.WindowsAzure.Storage.Blob;
 
 namespace ServerService
 {
@@ -9,6 +13,7 @@ namespace ServerService
     {
         ManualResetEvent _stopWorkEvent;
         string _outDir;
+        CloudBlobContainer _cloudBlobContainer;
 
         public FileSystemWatcher Watcher { get; }
         public Thread WorkThread { get; }
@@ -22,6 +27,13 @@ namespace ServerService
             Watcher = new FileSystemWatcher(settingsDir);
             Watcher.Changed += Watcher_Changed;
             WorkThread = new Thread(ProcessFiles);
+
+            CloudStorageAccount storageAccount;
+            var storageConnectionString = ConfigurationManager.AppSettings["Storage"];
+            if (!CloudStorageAccount.TryParse(storageConnectionString, out storageAccount)) return;
+            var cloudBlobClient = storageAccount.CreateCloudBlobClient();
+            _cloudBlobContainer =
+                cloudBlobClient.GetContainerReference(ConfigurationManager.AppSettings["Container"]);
         }
 
         private void ProcessFiles(object obj)
@@ -29,15 +41,26 @@ namespace ServerService
             do
             {
                 if (_stopWorkEvent.WaitOne(TimeSpan.Zero)) return;
-
+                RecieveFiles().GetAwaiter().GetResult();
             } while (WaitHandle.WaitAny(new WaitHandle[] {_stopWorkEvent}, 3000) != 0);
+        }
+
+        private async Task RecieveFiles()
+        {
+            var queueClient =
+                QueueClient.Create(ConfigurationManager.AppSettings["Queue"], ReceiveMode.ReceiveAndDelete);
+            var message = await queueClient.ReceiveAsync();
+            var id = message.GetBody<string>();
+            await queueClient.CloseAsync();
+
+            var cloudBlockBlob = _cloudBlobContainer.GetBlockBlobReference(id);
+            await cloudBlockBlob.DownloadToFileAsync($@"{_outDir}\{id}.pdf", FileMode.Create);
+            await cloudBlockBlob.DeleteAsync();
         }
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
-            //AutoResetEvent _fileEditEvent;
-            //_fileEditEvent = new AutoResetEvent(false);
-            //, _fileEditEvent_fileEditEvent.Set();           
+            //var pdf = PdfDocument.nderPdfDoc//pdf.Save(ms, false)
         }
 
         public void Start()

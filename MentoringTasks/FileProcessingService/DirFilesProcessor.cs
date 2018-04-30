@@ -1,11 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using Microsoft.ServiceBus.Messaging;
 using Microsoft.WindowsAzure.Storage;
 using Microsoft.WindowsAzure.Storage.Blob;
 using MigraDoc.DocumentObjectModel;
@@ -31,6 +33,13 @@ namespace FileProcessingService
             Watcher = new FileSystemWatcher(inDir);
             Watcher.Created += Watcher_Created;
             WorkThread = new Thread(ProcessFiles);
+
+            CloudStorageAccount storageAccount;
+            var storageConnectionString = ConfigurationManager.AppSettings["Storage"];
+            if (!CloudStorageAccount.TryParse(storageConnectionString, out storageAccount)) return;
+            var cloudBlobClient = storageAccount.CreateCloudBlobClient();
+            _cloudBlobContainer =
+                cloudBlobClient.GetContainerReference(ConfigurationManager.AppSettings["Container"]);
         }
 
         string _inDir;
@@ -38,11 +47,14 @@ namespace FileProcessingService
         
         AutoResetEvent _newFileEvent;
         List<string> _files;
-        Document _document; 
-         
+        Document _document;
+
+        CloudBlobContainer _cloudBlobContainer;
+
         int _tryOpenFileAttempts = 3;
         int _tryOpenFileDelay = 3000;
         string _pattern = "IMG_[0-9]+.(PNG|JPEG|BMP)";
+        string _barcodeText = "SEPARATOR";
 
         public FileSystemWatcher Watcher { get; }
         public Thread WorkThread { get; }
@@ -93,45 +105,22 @@ namespace FileProcessingService
 
         private async Task SendFiles(IEnumerable<string> files)
         {
-            // Create the CloudBlobClient that rep = nullartblobs"CloudBlobClientCloudBlockBlob
-            CloudStorageAccount storageAccount;
-            CloudBlobContainer cloudBlobContainer = null;
-            
-            string storageConnectionString =
-                "DefaultEndpointsProtocol=https;AccountName=blobs2018;AccountKey=TP4jBXy9kr0Gek0GSdDVbyJlJlKEvstAcwZ+lxrvHr/vK2+oTXZKwuPaVXKzXc2pt8oSLr43nQ/NWJ1VsB5izg==;EndpointSuffix=core.windows.net";
+            var id = Guid.NewGuid().ToString();
+            var cloudBlockBlob = _cloudBlobContainer.GetBlockBlobReference(id);
+            var ms = new MemoryStream();
+            var pdf = RenderPdfDocument();
+            pdf.Save(ms, false);
+            await cloudBlockBlob.UploadFromStreamAsync(ms);
 
-            if (CloudStorageAccount.TryParse(storageConnectionString, out storageAccount))
+            var queueClient = QueueClient.Create(ConfigurationManager.AppSettings["Queue"]);
+            var message = new BrokeredMessage(id);
+            await queueClient.SendAsync(message);
+            await queueClient.CloseAsync();
+
+            foreach (var file in files)
             {
-                try
-                {
-                    var cloudBlobClient = storageAccount.CreateCloudBlobClient();
-                    cloudBlobContainer = cloudBlobClient.GetContainerReference("test");
-                    var cloudBlockBlob = cloudBlobContainer.GetBlockBlobReference($"blob{Guid.NewGuid()}");
-                    var s = new MemoryStream();
-                    var pdf = RenderPdfDocument();
-                    pdf.Save(s, false);
-                    s.Position = 0;
-                    cloudBlockBlob.UploadFromStream(s);
-
-                    foreach (var file in files)
-                    {
-                        if (!TryOpenFile(file, _tryOpenFileAttempts)) continue;
-                        File.Delete(file);
-                    }
-                }
-                catch (StorageException ex)
-                {
-                    Console.WriteLine("Error returned from the service: {0}", ex.Message);
-                }
-                //finallyAsyncawait 
-                //{
-                //    if (cloudBlobContainer != null)
-                //    {
-                //        await cloudBlobContainer.DeleteIfEx
-                //    }
-
-                //    
-                //}
+                if (!TryOpenFile(file, _tryOpenFileAttempts)) continue;
+                File.Delete(file);
             }
         }
 
@@ -166,7 +155,7 @@ namespace FileProcessingService
             render.RenderDocument();
             _document = new Document();
             _document.AddSection();
-            return render.PdfDocument;//r}\{DateTime.Now.ToFileTime()}.pdf");
+            return render.PdfDocument;
         }
 
         private bool FileIsBarcode(string file)
@@ -174,7 +163,7 @@ namespace FileProcessingService
             var reader = new BarcodeReader {AutoRotate = true};
             var bmp = (Bitmap) Image.FromFile(file);
             var result = reader.Decode(bmp);
-            return result?.Text.ToUpper() == "SEPARATOR";
+            return result?.Text.ToUpper() == _barcodeText;
         }
     }
 }
