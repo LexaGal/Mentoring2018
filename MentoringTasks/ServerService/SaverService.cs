@@ -13,24 +13,25 @@ namespace ServerService
     {
         ManualResetEvent _stopWorkEvent;
         string _outDir;
+        string _settingsFile;
         CloudBlobContainer _cloudBlobContainer;
         int _waitDelay = 1000;
 
         public FileSystemWatcher Watcher { get; }
         public Thread WorkThread { get; }
-        public Thread SendInfoThread { get; }
         public Thread RecieveInfoThread { get; }
 
         public SaverService(string outDir, string settingsDir)
         {
-            _outDir = outDir;
             _stopWorkEvent = new ManualResetEvent(false);
+            _outDir = outDir;
             Directory.CreateDirectory(outDir);
-
+            _settingsFile = Path.Combine(settingsDir, "settings.txt");
+            Directory.CreateDirectory(settingsDir);
+            
             Watcher = new FileSystemWatcher(settingsDir);
             Watcher.Changed += Watcher_Changed;
             WorkThread = new Thread(ProcessFiles);
-            SendInfoThread = new Thread(SendInfo);
             RecieveInfoThread = new Thread(RecieveInfo);
 
             CloudStorageAccount storageAccount;
@@ -39,6 +40,20 @@ namespace ServerService
             var cloudBlobClient = storageAccount.CreateCloudBlobClient();
             _cloudBlobContainer =
                 cloudBlobClient.GetContainerReference(ConfigurationManager.AppSettings["Container"]);
+        }
+
+        public void Start()
+        {
+            WorkThread.Start();
+            RecieveInfoThread.Start();
+            Watcher.EnableRaisingEvents = true;
+        }
+
+        public void Stop()
+        {
+            Watcher.EnableRaisingEvents = false;
+            WorkThread.Join();
+            RecieveInfoThread.Join();
         }
 
         private void ProcessFiles(object obj)
@@ -64,13 +79,10 @@ namespace ServerService
             await cloudBlockBlob.DeleteAsync();
         }
 
-        private void SendInfo(object obj)
+        private void SendInfo()
         {
-            do
-            {
-                SendState().GetAwaiter().GetResult();
-                SendBarcode().GetAwaiter().GetResult();
-            } while (WaitHandle.WaitAny(new WaitHandle[] {_stopWorkEvent}, _waitDelay) != 0);
+            SendState().GetAwaiter().GetResult();
+            SendBarcode().GetAwaiter().GetResult();
         }
 
         private void RecieveInfo(object obj)
@@ -100,17 +112,20 @@ namespace ServerService
         private async Task SendBarcode()
         {
             var queueClient = QueueClient.Create(ConfigurationManager.AppSettings["UpdateBarcodesQueue"]);
-            var newBarcodeText = $"NEW-BARCODE-{DateTime.Now.Second}";
-            
-            //for 2 services
-            var message = new BrokeredMessage(newBarcodeText);
-            await queueClient.SendAsync(message);
-            message = new BrokeredMessage(newBarcodeText);
-            await queueClient.SendAsync(message);
+            if (TryOpenFile(_settingsFile, 3))
+            {
+                var newBarcodeText = File.ReadAllLines(_settingsFile)[0].Split(' ')[1];
+                
+                //for 2 services
+                var message = new BrokeredMessage(newBarcodeText);
+                await queueClient.SendAsync(message);
+                message = new BrokeredMessage(newBarcodeText);
+                await queueClient.SendAsync(message);
 
-            await queueClient.CloseAsync();
+                await queueClient.CloseAsync();
 
-            Console.WriteLine($"Send: {newBarcodeText}");            
+                Console.WriteLine($"Send: {newBarcodeText}");
+            }
         }
 
         private async Task RecieveState()
@@ -138,23 +153,26 @@ namespace ServerService
 
         private void Watcher_Changed(object sender, FileSystemEventArgs e)
         {
+            SendInfo();
         }
 
-        public void Start()
+        private bool TryOpenFile(string fileName, int attempts)
         {
-            WorkThread.Start();
-            SendInfoThread.Start();
-            RecieveInfoThread.Start();
-            Watcher.EnableRaisingEvents = true;
-        }
-
-        public void Stop()
-        {
-            Watcher.EnableRaisingEvents = false;
-            WorkThread.Join();
-            SendInfoThread.Join();
-            RecieveInfoThread.Join();
-        }
+            for (var i = 0; i < attempts; i++)
+            {
+                try
+                {
+                    var file = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.None);
+                    file.Close();
+                    return true;
+                }
+                catch (IOException)
+                {
+                    Thread.Sleep(3000);
+                }
+            }
+            return false;
+        }        
     }
 
     public enum DirServiceState

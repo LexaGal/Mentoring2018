@@ -18,7 +18,7 @@ namespace ServerService
             }
 
             var outDir = Path.Combine(currentDir, "out");
-            var settingsDir = Path.Combine(currentDir, "../../");
+            var settingsDir = Path.Combine(currentDir, "settings");
             
             var conf = new LoggingConfiguration();
             var fileTarget = new FileTarget
