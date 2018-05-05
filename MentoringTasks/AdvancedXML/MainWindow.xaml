@@ -11,6 +11,8 @@
         <Button x:Name="LoadXsd" Content="Load XSD" HorizontalAlignment="Left" Margin="111,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXsd"/>
         <Button x:Name="ValidateXML" Content="Validate XML" HorizontalAlignment="Left" Margin="208,21,0,0" VerticalAlignment="Top" Width="75" Click="ValidateXml"/>
         <TextBox x:Name="ValidationLog" Margin="20,58,20,23"/>
+        <Button x:Name="GenerateRSS" Content="Generate RSS" HorizontalAlignment="Left" Margin="411,21,0,0" VerticalAlignment="Top" Width="75" Click="GenerateRss"/>
+        <Button x:Name="LoadXslt" Content="Load XSLT" HorizontalAlignment="Left" Margin="310,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXslt"/>
 
     </Grid>
 </Window>

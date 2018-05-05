@@ -1,7 +1,6 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <catalog xmlns="http://library.by/catalog">
-  <book id="bk101">
-    <isbn>0-596-00103-7</isbn>
+  <book id="bk101">    
     <author>Löwy, Juval</author>
     <title>COM and .NET Component Services</title>
     <genre>Computer</genre>
@@ -129,6 +128,7 @@
     <registration_date>2014-10-01</registration_date>
   </book>
   <book id="bk111">
+    <isbn>0-596-00103-7</isbn>
     <author>O'Brien, Tim</author>
     <title>MSXML3: A Comprehensive Guide</title>
     <genre>Computer</genre>
@@ -142,6 +142,7 @@
     <registration_date>2010-03-15</registration_date>
   </book>
   <book id="bk112">
+    <isbn>0-596-00103-8</isbn>
     <author>Galos, Mike</author>
     <title>Visual Studio 7: A Comprehensive Guide</title>
     <genre>Computer</genre>
