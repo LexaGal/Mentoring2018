@@ -1,0 +1,16 @@
+﻿<Window x:Class="AdvancedXML.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:AdvancedXML"
+        mc:Ignorable="d"
+        Title="Advanced XML" Height="350" Width="516">
+    <Grid Margin="0,0,2,0">
+        <Button x:Name="LoadXml" Content="Load XML" HorizontalAlignment="Left" Margin="20,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXml"/>
+        <Button x:Name="LoadXsd" Content="Load XSD" HorizontalAlignment="Left" Margin="111,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXsd"/>
+        <Button x:Name="ValidateXML" Content="Validate XML" HorizontalAlignment="Left" Margin="208,21,0,0" VerticalAlignment="Top" Width="75" Click="ValidateXml"/>
+        <TextBox x:Name="ValidationLog" Margin="20,58,20,23"/>
+
+    </Grid>
+</Window>
