@@ -5,14 +5,25 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:AdvancedXML"
         mc:Ignorable="d"
-        Title="Advanced XML" Height="350" Width="516">
+        Title="Advanced XML" Height="350" Width="576">
     <Grid Margin="0,0,2,0">
-        <Button x:Name="LoadXml" Content="Load XML" HorizontalAlignment="Left" Margin="20,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXml"/>
-        <Button x:Name="LoadXsd" Content="Load XSD" HorizontalAlignment="Left" Margin="111,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXsd"/>
-        <Button x:Name="ValidateXML" Content="Validate XML" HorizontalAlignment="Left" Margin="208,21,0,0" VerticalAlignment="Top" Width="75" Click="ValidateXml"/>
-        <TextBox x:Name="ValidationLog" Margin="20,58,20,23"/>
-        <Button x:Name="GenerateRSS" Content="Generate RSS" HorizontalAlignment="Left" Margin="411,21,0,0" VerticalAlignment="Top" Width="75" Click="GenerateRss"/>
-        <Button x:Name="LoadXslt" Content="Load XSLT" HorizontalAlignment="Left" Margin="310,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXslt"/>
+        <Button x:Name="LoadXml" Content="Load XML" HorizontalAlignment="Left" Margin="17,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXml"/>
+        <Button x:Name="LoadXsd" Content="Load XSD" HorizontalAlignment="Left" Margin="103,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXsd"/>
+        <Button x:Name="ValidateXML" Content="Validate XML" HorizontalAlignment="Left" Margin="189,21,0,0" VerticalAlignment="Top" Width="75" Click="ValidateXml"/>
+        <TextBox x:Name="ValidationLog" Margin="20,71,20,19" RenderTransformOrigin="0.5,0.5">
+            <TextBox.RenderTransform>
+                <TransformGroup>
+                    <ScaleTransform/>
+                    <SkewTransform AngleX="0.235"/>
+                    <RotateTransform/>
+                    <TranslateTransform X="-0.496"/>
+                </TransformGroup>
+            </TextBox.RenderTransform>
+        </TextBox>
+        <Button x:Name="GenerateRSS" Content="Generate RSS" HorizontalAlignment="Left" Margin="362,21,0,0" VerticalAlignment="Top" Width="75" Click="GenerateRss"/>
+        <Button x:Name="LoadXslt" Content="Load XSLT" HorizontalAlignment="Left" Margin="275,21,0,0" VerticalAlignment="Top" Width="75" Click="OpenXslt"/>
+        <Button x:Name="GenerateHTML" Content="Generate HTML" HorizontalAlignment="Left" Margin="449,21,0,0" VerticalAlignment="Top" Width="95" Click="GenerateHtml"/>
+        <Label x:Name="Label" Content="Valiidation" HorizontalAlignment="Left" Margin="16,45,0,0" VerticalAlignment="Top"/>
 
     </Grid>
 </Window>

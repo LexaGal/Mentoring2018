@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
@@ -28,9 +29,9 @@ namespace AdvancedXML
             ValidationLog.TextWrapping = TextWrapping.Wrap;
         }
 
-        string _xmlFile = "books.xml";
-        string _xsdFile = "books.xsd";
-        string _xsltFile = "booksToRSS.xslt";
+        string _xmlFile = @"XML/books.xml";
+        string _xsdFile = @"XSD/books.xsd";
+        string _xsltFile = @"XSLT/booksToRSS.xslt";
         string _nameSpace = "http://library.by/catalog";
         StringBuilder _builder;
 
@@ -92,6 +93,19 @@ namespace AdvancedXML
             xsl.Load(_xsltFile);
             var args = new XsltArgumentList();
             args.AddExtensionObject("http://library.by/ext", new DateExt());
+            var fs = new FileStream(saveDialog.FileName, FileMode.Create);
+            xsl.Transform(_xmlFile, args, fs);
+            fs.Close();
+        }
+
+        private void GenerateHtml(object sender, RoutedEventArgs e)
+        {
+            var saveDialog = new SaveFileDialog { Filter = "HTML Files|*.html" };
+            if (saveDialog.ShowDialog() != true) return;
+            var xsl = new XslCompiledTransform();
+            xsl.Load(_xsltFile);
+            var args = new XsltArgumentList();            
+            args.AddParam("Date", "", DateTime.Now.ToLongDateString());
             var fs = new FileStream(saveDialog.FileName, FileMode.Create);
             xsl.Transform(_xmlFile, args, fs);
             fs.Close();

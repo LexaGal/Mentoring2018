@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:ext="http://library.by/ext">
+  <channel>
+    <title>RSS books</title>
+  <item><title>COM and .NET Component Services</title><pubDate>Tue, 5 Jan 2016 00:00:00 -0700</pubDate></item>
+  <item><title>Midnight Rain</title><pubDate>Sun, 1 Jan 2017 00:00:00 -0700</pubDate></item>
+  <item><title>Maeve Ascendant</title><pubDate>Tue, 5 Jan 2016 00:00:00 -0700</pubDate></item>
+  <item><title>Oberon's Legacy</title><pubDate>Thu, 1 Mar 2012 00:00:00 -0700</pubDate></item>
+  <item><title>The Sundered Grail</title><pubDate>Tue, 5 Jan 2016 00:00:00 -0700</pubDate></item>
+  <item><title>Lover Birds</title><pubDate>Tue, 5 Jan 2016 00:00:00 -0700</pubDate></item>
+  <item><title>Splish Splash</title><pubDate>Thu, 5 Jan 2012 00:00:00 -0700</pubDate></item>
+  <item><title>Creepy Crawlies</title><pubDate>Wed, 5 Jan 2011 00:00:00 -0700</pubDate></item>
+  <item><title>Paradox Lost</title><pubDate>Tue, 5 Jan 2016 00:00:00 -0700</pubDate></item>
+  <item><title>Microsoft .NET: The Programming Bible</title><pubDate>Wed, 1 Oct 2014 00:00:00 -0700</pubDate></item>
+  <item><title>MSXML3: A Comprehensive Guide</title><pubDate>Mon, 15 Mar 2010 00:00:00 -0700</pubDate><link>http://my.safaribooksonline.com/0-596-00103-7</link></item>
+  <item><title>Visual Studio 7: A Comprehensive Guide</title><pubDate>Mon, 25 Apr 2011 00:00:00 -0700</pubDate><link>http://my.safaribooksonline.com/0-596-00103-8</link></item>
+</channel>
+</rss>
