@@ -1,16 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Media;
-using System.Windows.Navigation;
 using System.Windows.Shapes;
-using System.Xml;
-using System.Xml.Schema;
 using System.Xml.Xsl;
 using Microsoft.Win32;
 
@@ -24,16 +20,15 @@ namespace AdvancedXML
         public MainWindow()
         {
             InitializeComponent();
-            _builder = new StringBuilder();
             ValidationLog.IsReadOnly = true;
             ValidationLog.TextWrapping = TextWrapping.Wrap;
+            _xmlProc = new XmlProcessor();
         }
 
         string _xmlFile = @"XML/books.xml";
         string _xsdFile = @"XSD/books.xsd";
         string _xsltFile = @"XSLT/booksToRSS.xslt";
-        string _nameSpace = "http://library.by/catalog";
-        StringBuilder _builder;
+        XmlProcessor _xmlProc;
 
         private void OpenXml(object sender, RoutedEventArgs e)
         {
@@ -64,51 +59,21 @@ namespace AdvancedXML
 
         private void ValidateXml(object sender, RoutedEventArgs e)
         {
-            var settings = new XmlReaderSettings();
-
-            settings.Schemas.Add(_nameSpace, _xsdFile);
-            settings.ValidationEventHandler +=
-                (sndr, valArgs) =>
-                    _builder.AppendLine(
-                        $"[{valArgs.Exception.LineNumber}:{valArgs.Exception.LinePosition}] {valArgs.Message}");
-
-            settings.ValidationFlags = settings.ValidationFlags | XmlSchemaValidationFlags.ReportValidationWarnings;
-            settings.ValidationType = ValidationType.Schema;
-
-            using (var reader = XmlReader.Create(_xmlFile, settings))
-            {
-                while (reader.Read()) ;
-            }
-
-            if (_builder.Length == 0) _builder.Append("No errors found.");
-            ValidationLog.Text = _builder.ToString();
-            _builder.Clear();
+            ValidationLog.Text = _xmlProc.ValidateXml(_xsdFile, _xmlFile);
         }
 
         private void GenerateRss(object sender, RoutedEventArgs e)
         {
             var saveDialog = new SaveFileDialog {Filter = "XML Files|*.xml"};
             if (saveDialog.ShowDialog() != true) return;
-            var xsl = new XslCompiledTransform();
-            xsl.Load(_xsltFile);
-            var args = new XsltArgumentList();
-            args.AddExtensionObject("http://library.by/ext", new DateExt());
-            var fs = new FileStream(saveDialog.FileName, FileMode.Create);
-            xsl.Transform(_xmlFile, args, fs);
-            fs.Close();
+            _xmlProc.GenerateRss(_xsltFile, _xmlFile, saveDialog.FileName);
         }
 
         private void GenerateHtml(object sender, RoutedEventArgs e)
         {
             var saveDialog = new SaveFileDialog { Filter = "HTML Files|*.html" };
             if (saveDialog.ShowDialog() != true) return;
-            var xsl = new XslCompiledTransform();
-            xsl.Load(_xsltFile);
-            var args = new XsltArgumentList();            
-            args.AddParam("Date", "", DateTime.Now.ToLongDateString());
-            var fs = new FileStream(saveDialog.FileName, FileMode.Create);
-            xsl.Transform(_xmlFile, args, fs);
-            fs.Close();
+            _xmlProc.GenerateHtml(_xsltFile, _xmlFile, saveDialog.FileName);
         }
     }
 }

@@ -1,6 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <catalog xmlns="http://library.by/catalog">
-  <book id="bk101">    
+  <book id="bk101">
+    <isbn>0-596-00103-7</isbn>
     <author>Löwy, Juval</author>
     <title>COM and .NET Component Services</title>
     <genre>Computer</genre>
@@ -14,6 +15,7 @@
     <registration_date>2016-01-05</registration_date>
   </book>
   <book id="bk102">
+    <isbn>1-624-56039-3</isbn>
     <author>Ralls, Kim</author>
     <title>Midnight Rain</title>
     <genre>Fantasy</genre>
@@ -27,6 +29,7 @@
     <registration_date>2017-01-01</registration_date>
   </book>
   <book id="bk103">
+    <isbn>0-321-35017-0</isbn>
     <author>Corets, Eva</author>
     <title>Maeve Ascendant</title>
     <genre>Fantasy</genre>
@@ -40,6 +43,7 @@
     <registration_date>2016-01-05</registration_date>
   </book>
   <book id="bk104">
+    <isbn>0-887-50617-8</isbn>
     <author>Corets, Eva</author>
     <title>Oberon's Legacy</title>
     <genre>Fantasy</genre>
@@ -54,6 +58,7 @@
     <registration_date>2012-03-01</registration_date>
   </book>
   <book id="bk105">
+    <isbn>0-887-50617-8</isbn>
     <author>Corets, Eva</author>
     <title>The Sundered Grail</title>
     <genre>Fantasy</genre>
@@ -67,6 +72,7 @@
     <registration_date>2016-01-05</registration_date>
   </book>
   <book id="bk106">
+    <isbn>0-764-13062-5</isbn>
     <author>Randall, Cynthia</author>
     <title>Lover Birds</title>
     <genre>Romance</genre>
@@ -79,6 +85,7 @@
     <registration_date>2016-01-05</registration_date>
   </book>
   <book id="bk107">
+    <isbn>0-321-35017-0</isbn>
     <author>Thurman, Paula</author>
     <title>Splish Splash</title>
     <genre>Romance</genre>
@@ -91,6 +98,7 @@
     <registration_date>2012-01-05</registration_date>
   </book>
   <book id="bk108">
+    <isbn>0-794-50763-8</isbn>
     <author>Knorr, Stefan</author>
     <title>Creepy Crawlies</title>
     <genre>Horror</genre>
@@ -103,6 +111,7 @@
     <registration_date>2011-01-05</registration_date>
   </book>
   <book id="bk109">
+    <isbn>3-319-90489-2</isbn>
     <author>Kress, Peter</author>
     <title>Paradox Lost</title>
     <genre>Science Fiction</genre>
@@ -116,6 +125,7 @@
     <registration_date>2016-01-05</registration_date>
   </book>
   <book id="bk110">
+    <isbn>0-321-35017-0</isbn>
     <author>O'Brien, Tim</author>
     <title>Microsoft .NET: The Programming Bible</title>
     <genre>Computer</genre>
@@ -142,7 +152,7 @@
     <registration_date>2010-03-15</registration_date>
   </book>
   <book id="bk112">
-    <isbn>0-596-00103-8</isbn>
+    <isbn>1-119-40458-4</isbn>
     <author>Galos, Mike</author>
     <title>Visual Studio 7: A Comprehensive Guide</title>
     <genre>Computer</genre>

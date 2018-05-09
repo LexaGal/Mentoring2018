@@ -11,6 +11,8 @@
     <rss version="2.0">
       <channel>
         <title>RSS books</title>
+        <link>https://validator.w3.org/feed/</link>
+        <description>RSS books</description>
         <xsl:apply-templates/>
       </channel>
     </rss>
@@ -24,11 +26,9 @@
       <xsl:element name="pubDate">
         <xsl:value-of select="ext:GetPubDate(x:registration_date)"/>
       </xsl:element>
-      <xsl:if test="(x:genre = 'Computer') and (boolean(./x:isbn))">
-        <xsl:element name="link">
-          <xsl:value-of select="concat('http://my.safaribooksonline.com/', x:isbn)"/>
-        </xsl:element>
-      </xsl:if>
+      <xsl:element name="link">
+        <xsl:value-of select="concat('https://isbnsearch.org/isbn/', x:isbn)"/>
+      </xsl:element>
     </xsl:element>
   </xsl:template>
 
