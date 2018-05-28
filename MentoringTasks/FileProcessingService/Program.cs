@@ -19,8 +19,10 @@ namespace FileProcessingService
 
             var inDirs = new[]
             {
-                Path.Combine(currentDir, "in2")
+                Path.Combine(currentDir, "in1"),
+                Path.Combine(currentDir, "in1")
             };
+
             var outDir = Path.Combine(currentDir, "out");
             var processedDir = Path.Combine(currentDir, "processed");
             var brokenDir = Path.Combine(currentDir, "broken");

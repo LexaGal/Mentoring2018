@@ -1,7 +1,9 @@
-﻿using CastleIoC.Interfaces;
+﻿using System;
+using CastleIoC.Interfaces;
 using CastleIoC.IoC;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace FileProcessingService
@@ -25,6 +27,8 @@ namespace FileProcessingService
                 dfp.SetupDirFilesProcessor(inDir, outDir, processedDir, brokenDir, _stopWorkEvent);
                 _processors.Add(dfp);
             }
+
+            Console.WriteLine($"\nIn dirs are:\n{string.Join("\n", inDirs)}\nSo processors are equal: {_processors.First().Equals(_processors.Last())}\n");
 
             Directory.CreateDirectory(outDir);
             Directory.CreateDirectory(processedDir);

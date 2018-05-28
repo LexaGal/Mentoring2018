@@ -14,15 +14,14 @@ using System.ComponentModel;
 
 namespace FileProcessingService
 {
+    [Equals]
     public class DirFilesProcessor : IDirFilesProcessor, INotifyPropertyChanged
-    {             
-        string _inDir;
+    {
         string _outDir;
         string _processedDir;
         string _brokenDir;
 
         ManualResetEvent _stopWorkEvent;
-        
         AutoResetEvent _newFileEvent;
         List<string> _files;
         Document _document; 
@@ -31,7 +30,11 @@ namespace FileProcessingService
         int _tryOpenFileDelay = 3000;
         string _pattern = "IMG_[0-9]+.(PNG|JPEG|BMP)";
 
+        public string InDir { get; private set; }
+        
+        [IgnoreDuringEquals]
         public FileSystemWatcher Watcher { get; set; }
+        [IgnoreDuringEquals]
         public Thread WorkThread { get; set; }
 
         public event PropertyChangedEventHandler PropertyChanged;
@@ -45,7 +48,7 @@ namespace FileProcessingService
             _document = new Document();
             _document.AddSection();
 
-            _inDir = inDir;
+            InDir = inDir;
             _outDir = outDir;
             _processedDir = processedDir;
             _brokenDir = brokenDir;
@@ -64,7 +67,7 @@ namespace FileProcessingService
             LogTo.Info();
             WorkThread.Start();
             Watcher.EnableRaisingEvents = true;
-            return _inDir;
+            return InDir;
         }
 
         public DateTime Stop()
@@ -130,7 +133,7 @@ namespace FileProcessingService
             {
                 var destDir = _processedDir;
 
-                foreach (var file in Directory.EnumerateFiles(_inDir).ToList())
+                foreach (var file in Directory.EnumerateFiles(InDir).ToList())
                 {
                     if (_stopWorkEvent.WaitOne(TimeSpan.Zero)) return;
                     var fileName = Path.GetFileName(file);
